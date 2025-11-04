@@ -1,19 +1,42 @@
-import { CheckSquare } from 'lucide-react';
+import { CheckSquare, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
     }, 1000);
+  };
+
+  const handleGmailSignUp = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) {
+        setError(error.message);
+      }
+    } catch (err) {
+      setError('Failed to sign up with Gmail');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,6 +64,12 @@ function SignUp() {
           </h1>
           <p className="text-slate-400">Create your account to get started</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-900/20 border border-red-700 rounded-lg text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSignUp} className="space-y-6">
           <div>
@@ -96,6 +125,27 @@ function SignUp() {
             {loading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
+
+        <div className="mt-8">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-slate-800 text-slate-400">or continue with</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGmailSignUp}
+            disabled={loading}
+            className="w-full py-3 bg-slate-800/50 border border-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800/80 hover:border-slate-600 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+          >
+            <Mail className="w-5 h-5" />
+            Sign up with Gmail
+          </button>
+        </div>
 
         <div className="mt-8 text-center">
           <p className="text-slate-400">
